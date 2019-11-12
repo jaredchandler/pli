@@ -172,28 +172,41 @@ genPLI :: PliExp -> Q Exp
 genPLI e = case e of
 
   -- list[i]
-  (PLIELEM l i) ->  let fi = [| (if $(return i) < 0 then ((length $(return l)) + ($(return i)) ) else $(return i) )|] in
-                      [| ($(return l) !! $(fi)) |]
-                      -- The FI thing up top is for handling negative indices.
-                      -- If you just wanted the simple verison:
-                      -- [| ($(return l) !! $(return i))|] which becomes: (listname !! index)
+  (PLIELEM l i) ->
+    let ri = return i in
+    let rl = return l in
+    let fi = [| (if $ri < 0 then ((length $rl) + ($ri) ) else $ri )|] in
+    [| ($rl !! $(fi)) |]
+    -- The FI thing up top is for handling negative indices.
+    -- If you just wanted the simple verison:
+    -- [| ($rl !! $ri)|] which becomes: (listname !! index)
   -- list[i:j]
-  (PLILIST l i j ) -> let fi = [| (if $(return i) < 0 then ((length $(return l)) + ($(return i)) ) else $(return i) )|] in
-                      let fj = [| (if $(return j) < 0 then ((length $(return l)) + ($(return j)) ) else $(return j) )|] in
-                      [| (drop $(fi) (take $(fj) $(return l))) |]
-                      -- Simple Version
-                      -- [| (drop $(return i) (take $(return j) $(return l))) |] which becomes: (drop i (take j list))
+  (PLILIST l i j ) ->
+    let rl = return l in
+    let ri = return i in
+    let rj = return j in
+    let fi = [| (if $ri < 0 then ((length $rl) + ($ri) ) else $ri )|] in
+    let fj = [| (if $rj < 0 then ((length $rl) + ($rj) ) else $rj )|] in
+    [| (drop $(fi) (take $(fj) $rl)) |]
+    -- Simple Version
+    -- [| (drop $ri (take $rj $rl)) |] which becomes: (drop i (take j list))
 
   -- list[i:]
-  (PLILISTLO l i ) -> let fi = [| (if $(return i) < 0 then ((length $(return l)) + ($(return i)) ) else $(return i) )|] in
-                      [| (drop $(fi) $(return l)) |]
-                      -- Simple Version
-                      -- [| (drop $(return i) $(return l) |] which becomes: (drop i list)
+  (PLILISTLO l i ) ->
+    let rl = return l in
+    let ri = return i in
+    let fi = [| (if $ri < 0 then ((length $rl) + ($ri) ) else $ri )|] in
+    [| (drop $(fi) $rl) |]
+    -- Simple Version
+    -- [| (drop $ri $rl |] which becomes: (drop i list)
   -- list[:j]
-  (PLILISTHI l j ) -> let fj = [| (if $(return j) < 0 then ((length $(return l)) + ($(return j)) ) else $(return j) )|] in
-                      [|  (take $(fj) $(return l)) |]
-                      -- Simple Version
-                      -- [| (take $(return j) $(return l) |] which becomes: (take j list)
+  (PLILISTHI l j ) ->
+    let rl = return l in
+    let rj = return j in
+    let fj = [| (if $rj < 0 then ((length $rl) + ($rj) ) else $rj )|] in
+    [|  (take $(fj) $rl) |]
+    -- Simple Version
+    -- [| (take $rj $rl |] which becomes: (take j list)
 
 -- This says what to hand the string encompassed by the [pli| string goes here| ] to. 
 -- First ParsePLI, which is composed with genPli
